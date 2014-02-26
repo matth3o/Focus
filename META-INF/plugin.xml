@@ -38,6 +38,9 @@
 
   <actions>
     <!-- Add your actions here -->
+      <action id="generateComparisonChain" class="com.numergy.plugin.focus.GenerateAction" text="ComparisonChain..." description="blabla">
+          <add-to-group group-id="GenerateGroup" anchor="last"/>
+      </action>
   </actions>
 
 </idea-plugin>
