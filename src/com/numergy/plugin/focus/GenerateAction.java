@@ -10,9 +10,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 
-/**
- * Created by matth3o on 2/26/14.
- */
 public class GenerateAction extends AnAction {
 
     public void actionPerformed(AnActionEvent e) {

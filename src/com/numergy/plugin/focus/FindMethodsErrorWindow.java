@@ -4,30 +4,32 @@ import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.ToolbarDecorator;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class GenerateDialog extends DialogWrapper {
+public class FindMethodsErrorWindow extends DialogWrapper {
 
     private final LabeledComponent<JPanel> component;
-    private CollectionListModel<PsiField> myFields;
+    private CollectionListModel<PsiMethod> myCurrentMethods;
 
-    public GenerateDialog(PsiClass psiClass) {
+    public FindMethodsErrorWindow(PsiClass psiClass, String errorMessage) {
+        // init
         super(psiClass.getProject());
         init();
-        setTitle("Select Fields coco !!!");
+        setTitle("ERROR " + errorMessage);
 
-        myFields = new CollectionListModel<PsiField>(psiClass.getAllFields());
-        JList fieldList = new JList(myFields);
-        fieldList.setCellRenderer(new DefaultPsiElementCellRenderer());
-        ToolbarDecorator decorator = ToolbarDecorator.createDecorator(fieldList);
+
+        ToolbarDecorator decorator = ToolbarDecorator.createDecorator(new JTable());
         decorator.disableAddAction();
         JPanel panel = decorator.createPanel();
-        component = LabeledComponent.create(panel, "Fields to include !!!!");
+
+        // create LabeledComponent and init
+        component = LabeledComponent.create(panel, "Current Method");
+        init();
     }
 
     @Nullable
