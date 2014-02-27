@@ -14,13 +14,11 @@ import javax.swing.*;
 public class FindMethodsErrorWindow extends DialogWrapper {
 
     private final LabeledComponent<JPanel> component;
-    private CollectionListModel<PsiMethod> myCurrentMethods;
 
     public FindMethodsErrorWindow(PsiClass psiClass, String errorMessage) {
-        // init
         super(psiClass.getProject());
-        init();
-        setTitle("ERROR " + errorMessage);
+//        init();
+        setTitle("ERROR");
 
 
         ToolbarDecorator decorator = ToolbarDecorator.createDecorator(new JTable());
@@ -28,7 +26,7 @@ public class FindMethodsErrorWindow extends DialogWrapper {
         JPanel panel = decorator.createPanel();
 
         // create LabeledComponent and init
-        component = LabeledComponent.create(panel, "Current Method");
+        component = LabeledComponent.create(panel, errorMessage);
         init();
     }
 

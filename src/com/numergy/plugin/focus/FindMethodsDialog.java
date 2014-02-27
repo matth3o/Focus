@@ -10,6 +10,9 @@ import com.intellij.ui.ToolbarDecorator;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 public class FindMethodsDialog extends DialogWrapper {
 
@@ -17,16 +20,16 @@ public class FindMethodsDialog extends DialogWrapper {
 //    private CollectionListModel<PsiField> myFields;
     private CollectionListModel<PsiMethod> myCurrentMethods;
 
-    public FindMethodsDialog(PsiClass psiClass, PsiMethod psiMethod) {
+    public FindMethodsDialog(PsiClass psiClass, Set<PsiMethod> subMethodsList) {
         // init
         super(psiClass.getProject());
         init();
-        setTitle("Current Method");
+        setTitle("Sub Methods List");
 
 
         // get all methods of the class (super class methods are excluded)
         myCurrentMethods = new CollectionListModel<PsiMethod>();
-        myCurrentMethods.add(psiMethod);
+        myCurrentMethods.add(new ArrayList<PsiMethod>(subMethodsList));
         JList currentMethodList = new JList(myCurrentMethods);
         currentMethodList.setCellRenderer(new DefaultPsiElementCellRenderer());
 
@@ -38,7 +41,7 @@ public class FindMethodsDialog extends DialogWrapper {
         JPanel panel = decorator.createPanel();
 
         // create LabeledComponent and init
-        component = LabeledComponent.create(panel, "Current Method");
+        component = LabeledComponent.create(panel, "Sub Methods List");
         init();
     }
 
