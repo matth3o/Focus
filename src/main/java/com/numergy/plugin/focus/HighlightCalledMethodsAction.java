@@ -13,9 +13,6 @@ import org.jetbrains.generate.tostring.psi.PsiAdapter;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * Created by ken2ke on 2/27/14.
- */
 public class HighlightCalledMethodsAction extends AnAction {
     /**
      * Methode appelée lorsque l'Action FindMethods est appelée
