@@ -37,9 +37,11 @@
   </project-components>
 
   <actions>
-    <!-- Add your actions here -->
-      <action id="FindMethods" class="com.numergy.plugin.focus.FindMethodsAction" text="FindMethods..." description="description here">
-          <add-to-group group-id="GenerateGroup" anchor="first"/>
+      <action id="HighlightCalledMethods-1" class="com.numergy.plugin.focus.HighlightCalledMethodsAction" text="Highlight Called Methods"
+              description="Highlight called methods">
+
+          <add-to-group group-id="CodeMenu" anchor="last" />
+
       </action>
   </actions>
 

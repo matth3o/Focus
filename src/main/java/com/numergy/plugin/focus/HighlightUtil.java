@@ -10,10 +10,10 @@ import java.awt.*;
 import java.util.HashSet;
 import java.util.Set;
 
-public class HighLightUtil {
+public class HighlightUtil {
 
     private static Set<RangeHighlighter> highlighters = new HashSet<RangeHighlighter>();
-    private static final TextAttributes CURRENTLINE_ATTRIBUTES = new TextAttributes(null, new Color(220, 255, 220), null, null, Font.PLAIN);
+    private static final TextAttributes CURRENT_LINE_ATTRIBUTES = new TextAttributes(null, new Color(220, 255, 220), null, null, Font.PLAIN);
 
     public static void highlightMethods(Editor editor, Set<PsiMethod> methods) {
 
@@ -24,7 +24,7 @@ public class HighLightUtil {
             MarkupModel mm = editor.getMarkupModel();
             for (Integer line : lines) {
                 if (line >= 0 && line < editor.getDocument().getLineCount()) {
-                    highlighters.add(mm.addLineHighlighter(line, 100, CURRENTLINE_ATTRIBUTES));
+                    highlighters.add(mm.addLineHighlighter(line, 100, CURRENT_LINE_ATTRIBUTES));
                 }
             }
         }
