@@ -14,11 +14,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class HighlightCalledMethodsAction extends AnAction {
-    /**
-     * Methode appelée lorsque l'Action FindMethods est appelée
-     *
-     * @param e
-     */
+
     public void actionPerformed(AnActionEvent e) {
 
         PsiClass psiClass = getPsiClassFromContext(e);
@@ -31,13 +27,21 @@ public class HighlightCalledMethodsAction extends AnAction {
             Set<PsiMethodCallExpression> subMethodCalls = new HashSet<PsiMethodCallExpression>();
 
             // recursive search
-            searchInElement(psiCurrentMethod, subMethodCalls);
+            searchForMethodCallExpression(psiCurrentMethod, subMethodCalls);
 
             // analyse the set of <PsiMethodCallExpression>
             for (PsiMethodCallExpression methodCall : subMethodCalls) {
 
                 PsiElement referenceExpression = PsiTreeUtil.getChildOfType(methodCall, PsiReferenceExpression.class);
+                if (referenceExpression == null) {
+                    continue;
+                }
+
                 PsiElement identifier = PsiTreeUtil.getChildOfType(referenceExpression, PsiIdentifier.class);
+                if (identifier == null) {
+                    continue;
+                }
+
                 String methodName = identifier.getText();
 
                 // try to find method in current class
@@ -85,7 +89,7 @@ public class HighlightCalledMethodsAction extends AnAction {
         return PsiTreeUtil.getParentOfType(elementAt, PsiMethod.class);
     }
 
-    protected void searchInElement(PsiElement element, Set<PsiMethodCallExpression> methodCalls) {
+    protected void searchForMethodCallExpression(PsiElement element, Set<PsiMethodCallExpression> methodCalls) {
 
         if (element.getClass() == PsiMethodCallExpressionImpl.class) {
             methodCalls.add((PsiMethodCallExpression) element);
@@ -93,17 +97,15 @@ public class HighlightCalledMethodsAction extends AnAction {
 
         PsiElement[] children = element.getChildren();
         for (PsiElement child : children) {
-            searchInElement(child, methodCalls);
+            searchForMethodCallExpression(child, methodCalls);
         }
     }
-
 
     @Override
     public void update(AnActionEvent e) {
 
         PsiClass psiClass = getPsiClassFromContext(e);
         e.getPresentation().setEnabled(psiClass != null);
-
     }
 
 }
