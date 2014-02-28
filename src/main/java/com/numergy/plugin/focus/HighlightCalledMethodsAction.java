@@ -17,19 +17,22 @@ public class HighlightCalledMethodsAction extends AnAction {
 
     public void actionPerformed(AnActionEvent e) {
 
-        PsiClass psiClass = getPsiClassFromContext(e);
-        PsiMethod psiCurrentMethod = getCurrentMethodFromContext(e);
+        PsiFile psiFile = e.getData(LangDataKeys.PSI_FILE);
+        Editor editor = e.getData(PlatformDataKeys.EDITOR);
+
+        PsiClass psiClass = getPsiClassFromContext(e, psiFile, editor);
+        PsiMethod psiCurrentMethod = getCurrentMethodFromContext(e, psiFile, editor);
 
         if (psiCurrentMethod == null) {
-            HighlightUtil.highlightMethods(e.getData(PlatformDataKeys.EDITOR), null);
+            HighlightUtil.highlightMethods(editor, null);
         } else {
             Set<PsiMethod> subMethods = new HashSet<PsiMethod>();
             Set<PsiMethodCallExpression> subMethodCalls = new HashSet<PsiMethodCallExpression>();
 
             // recursive search
-            searchForMethodCallExpression(psiCurrentMethod, subMethodCalls);
+            findMethodCallExpressionInElement(psiCurrentMethod, subMethodCalls);
 
-            // analyse the set of <PsiMethodCallExpression>
+            // parse set of <PsiMethodCallExpression>
             for (PsiMethodCallExpression methodCall : subMethodCalls) {
 
                 PsiElement referenceExpression = PsiTreeUtil.getChildOfType(methodCall, PsiReferenceExpression.class);
@@ -43,8 +46,6 @@ public class HighlightCalledMethodsAction extends AnAction {
                 }
 
                 String methodName = identifier.getText();
-
-                // try to find method in current class
                 PsiMethod subMethod = PsiAdapter.findMethodByName(psiClass, methodName);
 
                 if (subMethod != null) {
@@ -53,58 +54,58 @@ public class HighlightCalledMethodsAction extends AnAction {
             }
 
             // highlight methods
-            HighlightUtil.highlightMethods(e.getData(PlatformDataKeys.EDITOR), subMethods);
+            HighlightUtil.highlightMethods(editor, subMethods);
         }
     }
 
-    private PsiClass getPsiClassFromContext(AnActionEvent e) {
+    private PsiClass getPsiClassFromContext(AnActionEvent e,PsiFile psiFile, Editor editor) {
 
         // get datas from context (psiFile & editor)
-        PsiFile psiFile = e.getData(LangDataKeys.PSI_FILE);
-        Editor editor = e.getData(PlatformDataKeys.EDITOR);
         if (psiFile == null || editor == null) {
             e.getPresentation().setEnabled(false);
             return null;
         }
 
-        int offset = editor.getCaretModel().getOffset();                // get offset from editor
-        PsiElement elementAt = psiFile.findElementAt(offset);           // get current element from offset
-        e.getPresentation().setEnabled(false);
-        return PsiTreeUtil.getParentOfType(elementAt, PsiClass.class);  // return PsiClass
+        PsiElement elementAt = getCurrentElementFrom(psiFile, editor);
+        return PsiTreeUtil.getParentOfType(elementAt, PsiClass.class);
     }
 
-    private PsiMethod getCurrentMethodFromContext(AnActionEvent e) {
+    private PsiMethod getCurrentMethodFromContext(AnActionEvent e,PsiFile psiFile, Editor editor) {
 
         // get datas from context (psiFile & editor)
-        PsiFile psiFile = e.getData(LangDataKeys.PSI_FILE);
-        Editor editor = e.getData(PlatformDataKeys.EDITOR);
         if (psiFile == null || editor == null) {
             e.getPresentation().setEnabled(false);
             return null;
         }
 
-        int offset = editor.getCaretModel().getOffset();
-        PsiElement elementAt = psiFile.findElementAt(offset);
-
+        PsiElement elementAt = getCurrentElementFrom(psiFile, editor);
         return PsiTreeUtil.getParentOfType(elementAt, PsiMethod.class);
     }
 
-    protected void searchForMethodCallExpression(PsiElement element, Set<PsiMethodCallExpression> methodCalls) {
+    private PsiElement getCurrentElementFrom(PsiFile psiFile, Editor editor) {
 
-        if (element.getClass() == PsiMethodCallExpressionImpl.class) {
+        int offset = editor.getCaretModel().getOffset();
+        return psiFile.findElementAt(offset);
+    }
+
+    protected void findMethodCallExpressionInElement(PsiElement element, Set<PsiMethodCallExpression> methodCalls) {
+
+        if (element.getClass().equals(PsiMethodCallExpressionImpl.class)) {
             methodCalls.add((PsiMethodCallExpression) element);
         }
 
-        PsiElement[] children = element.getChildren();
-        for (PsiElement child : children) {
-            searchForMethodCallExpression(child, methodCalls);
+        for (PsiElement child : element.getChildren()) {
+            findMethodCallExpressionInElement(child, methodCalls);
         }
     }
 
     @Override
     public void update(AnActionEvent e) {
 
-        PsiClass psiClass = getPsiClassFromContext(e);
+        PsiFile psiFile = e.getData(LangDataKeys.PSI_FILE);
+        Editor editor = e.getData(PlatformDataKeys.EDITOR);
+
+        PsiClass psiClass = getPsiClassFromContext(e, psiFile, editor);
         e.getPresentation().setEnabled(psiClass != null);
     }
 
