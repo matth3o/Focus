@@ -1,17 +1,25 @@
 package com.numergy.plugin.focus;
 
+import java.awt.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+import org.jetbrains.generate.tostring.psi.PsiAdapter;
+
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.java.PsiMethodCallExpressionImpl;
 import com.intellij.psi.util.PsiTreeUtil;
-import org.jetbrains.generate.tostring.psi.PsiAdapter;
-
-import java.util.HashSet;
-import java.util.Set;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
 
 public class HighlightCalledMethodsAction extends AnAction {
 
@@ -26,39 +34,56 @@ public class HighlightCalledMethodsAction extends AnAction {
         if (psiCurrentMethod == null) {
             HighlightUtil.highlightMethods(editor, null);
         } else {
-            Set<PsiMethod> subMethods = new HashSet<PsiMethod>();
+            Map<Integer, PsiMethod> subMethodsToHighlight = new HashMap<Integer, PsiMethod>();
             Set<PsiMethodCallExpression> subMethodCalls = new HashSet<PsiMethodCallExpression>();
 
-            // recursive search
+            // look for calls in current method recursively
             findMethodCallExpressionInElement(psiCurrentMethod, subMethodCalls);
 
             // parse set of <PsiMethodCallExpression>
             for (PsiMethodCallExpression methodCall : subMethodCalls) {
 
                 PsiElement referenceExpression = PsiTreeUtil.getChildOfType(methodCall, PsiReferenceExpression.class);
-                if (referenceExpression == null) {
+                if (referenceExpression == null)
                     continue;
-                }
 
                 PsiElement identifier = PsiTreeUtil.getChildOfType(referenceExpression, PsiIdentifier.class);
-                if (identifier == null) {
+                if (identifier == null)
                     continue;
-                }
 
-                String methodName = identifier.getText();
-                PsiMethod subMethod = PsiAdapter.findMethodByName(psiClass, methodName);
+                String subMethodName = identifier.getText();
+                int subMethodCallLine = editor.getDocument().getLineNumber(identifier.getTextRange().getStartOffset());
+
+                PsiMethod subMethod = PsiAdapter.findMethodByName(psiClass, subMethodName);
 
                 if (subMethod != null) {
-                    subMethods.add(subMethod);
+                    subMethodsToHighlight.put(subMethodCallLine, subMethod);
                 }
             }
 
-            // highlight methods
-            HighlightUtil.highlightMethods(editor, subMethods);
+            ToolWindowManager twm = ToolWindowManager.getInstance(getEventProject(e));
+            ToolWindow structureToolWindow = twm.getToolWindow("Structure");
+            final ContentManager contentManager = structureToolWindow.getContentManager();
+            final Content[] contents = contentManager.getContents();
+            contents[0].getActions();
+
+
+
+            final Component[] components = structureToolWindow.getComponent().getComponents();
+
+            for (Component comp : components) {
+                if (comp.getClass().getSimpleName().equals("MyContentComponent")) {
+
+                    System.out.print("Break");
+
+                }
+            }
+
+            HighlightUtil.highlightMethods(editor, subMethodsToHighlight);
         }
     }
 
-    private PsiClass getPsiClassFromContext(AnActionEvent e,PsiFile psiFile, Editor editor) {
+    private PsiClass getPsiClassFromContext(AnActionEvent e, PsiFile psiFile, Editor editor) {
 
         // get datas from context (psiFile & editor)
         if (psiFile == null || editor == null) {
@@ -70,7 +95,7 @@ public class HighlightCalledMethodsAction extends AnAction {
         return PsiTreeUtil.getParentOfType(elementAt, PsiClass.class);
     }
 
-    private PsiMethod getCurrentMethodFromContext(AnActionEvent e,PsiFile psiFile, Editor editor) {
+    private PsiMethod getCurrentMethodFromContext(AnActionEvent e, PsiFile psiFile, Editor editor) {
 
         // get datas from context (psiFile & editor)
         if (psiFile == null || editor == null) {

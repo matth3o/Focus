@@ -1,45 +1,73 @@
 package com.numergy.plugin.focus;
 
+import java.awt.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.PsiMethod;
 
-import java.awt.*;
-import java.util.HashSet;
-import java.util.Set;
-
 public class HighlightUtil {
 
     private static Set<RangeHighlighter> highlighters = new HashSet<RangeHighlighter>();
-    private static final TextAttributes CURRENT_LINE_ATTRIBUTES = new TextAttributes(null, new Color(220, 255, 220), null, null, Font.PLAIN);
+    private static final TextAttributes TEXT_ATTRIBUTES = new TextAttributes(null, new Color(220, 255, 220), null, null, Font.PLAIN);
 
-    public static void highlightMethods(Editor editor, Set<PsiMethod> methods) {
+    public static void highlightMethods(Editor editor, Map<Integer, PsiMethod> methods) {
 
         clearHighlightedLine(editor);
 
+        MarkupModel markupModel = editor.getMarkupModel();
+
+        Map<PsiMethod, TextAttributes> alreadyHighlightedMethods = new HashMap<PsiMethod, TextAttributes>();
+
         if (methods != null && !methods.isEmpty()) {
-            Set<Integer> lines = getLinesOf(editor, methods);
-            MarkupModel mm = editor.getMarkupModel();
-            for (Integer line : lines) {
-                if (line >= 0 && line < editor.getDocument().getLineCount()) {
-                    highlighters.add(mm.addLineHighlighter(line, 100, CURRENT_LINE_ATTRIBUTES));
+            for (int callingLine : methods.keySet()) {
+
+                PsiMethod method = methods.get(callingLine);
+
+                // check if method is already highlighted
+                if (alreadyHighlightedMethods.containsKey(method)) {
+                    // highlight calling line only
+                    highlighters.add(markupModel.addLineHighlighter(callingLine, 100, alreadyHighlightedMethods.get(method)));
+                    continue;
                 }
+
+                // create highlighting color (minimum = 200, for having light colors)
+                int randomR = (int) (200 + StrictMath.random() * 55);
+                int randomG = (int) (200 + StrictMath.random() * 55);
+                int randomB = (int) (200 + StrictMath.random() * 55);
+                Color color = new Color(randomR, randomG, randomB);
+
+                // create text attributes using highlighting color
+                TextAttributes textAttributes = new TextAttributes(null, color, null, null, Font.PLAIN);
+
+                // get PsiMethod lines to highlight
+                Set<Integer> lines = getLinesOf(editor, method);
+
+                // highlight calling line
+                highlighters.add(markupModel.addLineHighlighter(callingLine, 100, textAttributes));
+
+                // highlight method block
+                for (Integer line : lines) {
+                    highlighters.add(markupModel.addLineHighlighter(line, 100, textAttributes));
+                }
+
+                // memorize method + text attributes
+                alreadyHighlightedMethods.put(method, textAttributes);
             }
         }
     }
 
-    private static Set<Integer> getLinesOf(Editor editor, Set<PsiMethod> methods) {
+    private static Set<Integer> getLinesOf(Editor editor, PsiMethod method) {
         Set<Integer> range = new HashSet<Integer>();
-
-        for (PsiMethod psiMethod : methods) {
-            range.addAll(getRangeLines(editor, psiMethod));
-        }
-
+        range.addAll(getRangeLines(editor, method));
         return range;
     }
-
 
     private static Set<Integer> getRangeLines(Editor editor, PsiMethod method) {
         Set<Integer> range = new HashSet<Integer>();
@@ -62,6 +90,5 @@ public class HighlightUtil {
             highlighters.clear();
         }
     }
-
 
 }
